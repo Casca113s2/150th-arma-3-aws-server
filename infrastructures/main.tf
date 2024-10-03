@@ -65,6 +65,30 @@ resource "aws_security_group" "ec2_sg" {
 }
 
 ##Inbound
+# resource "aws_vpc_security_group_ingress_rule" "allow_port_9989_from_my_ip" {
+#   security_group_id = aws_security_group.ec2_sg.id
+#   ip_protocol       = "tcp"
+#   from_port         = 9989
+#   to_port           = 9989
+#   cidr_ipv4         = "YOUR_IP/32" # Replace YOUR_IP with your actual IP address (e.g., 192.168.1.1/32)
+# }
+
+# resource "aws_vpc_security_group_ingress_rule" "allow_port_2302_to_2306_tcp" {
+#   security_group_id = aws_security_group.ec2_sg.id
+#   ip_protocol       = "tcp"
+#   from_port         = 2302
+#   to_port           = 2306
+#   cidr_ipv4         = "0.0.0.0/0"
+# }
+
+# resource "aws_vpc_security_group_ingress_rule" "allow_port_2302_to_2306_udp" {
+#   security_group_id = aws_security_group.ec2_sg.id
+#   ip_protocol       = "udp"
+#   from_port         = 2302
+#   to_port           = 2306
+#   cidr_ipv4         = "0.0.0.0/0"
+# }
+
 resource "aws_vpc_security_group_ingress_rule" "allow_all_inbound" {
   security_group_id = aws_security_group.ec2_sg.id
   ip_protocol       = "-1"
@@ -96,6 +120,7 @@ data "template_file" "script" {
     SERVERINIT   = base64encode(file("../server_init.sh"))
     STEAMCMDINIT = base64encode(file("../steamcmd_webpanel_init.sh"))
     SCRIPTINIT   = base64encode(file("../install_mods_and_config.sh"))
+    OCAPINIT     = base64encode(file("../install_ocap.sh"))
   }
 }
 
@@ -115,29 +140,13 @@ data "template_cloudinit_config" "config" {
 #------------------------------#
 #Build EC2 instance in Public Subnet
 #------------------------------#
-# module "ec2_instance_dev" {
-#   source  = "terraform-aws-modules/ec2-instance/aws"
-#   version = "5.7.0"
-
-#   name = "arma3-dev-instance"
-
-#   instance_type               = "c5.2xlarge"
-#   ami                         = var.ami_id
-#   monitoring                  = true
-#   vpc_security_group_ids      = [aws_security_group.ec2_sg.id]
-#   subnet_id                   = module.vpc.public_subnets[0]
-#   iam_instance_profile        = aws_iam_instance_profile.ec2_instance_profile.name
-#   associate_public_ip_address = true
-#   user_data_base64            = data.template_cloudinit_config.config.rendered
-# }
-
-module "ec2_instance_production" {
+module "ec2_instance_dev" {
   source  = "terraform-aws-modules/ec2-instance/aws"
   version = "5.7.0"
 
-  name = "arma3-test-instance"
+  name = "arma3-dev-instance"
 
-  instance_type               = "m5zn.2xlarge" # Recommend instances: c5.4xlarge m5zn.2xlarge 
+  instance_type               = "c5.large" # Recommend instances: c5.2xlarge c5.large
   ami                         = var.ami_id
   monitoring                  = true
   vpc_security_group_ids      = [aws_security_group.ec2_sg.id]
@@ -147,17 +156,33 @@ module "ec2_instance_production" {
   user_data_base64            = data.template_cloudinit_config.config.rendered
 }
 
+# module "ec2_instance_production" {
+#   source  = "terraform-aws-modules/ec2-instance/aws"
+#   version = "5.7.0"
+
+#   name = "arma3-test-instance"
+
+#   instance_type               = "m5zn.2xlarge" # Recommend instances: c5.4xlarge m5zn.2xlarge 
+#   ami                         = var.ami_id
+#   monitoring                  = true
+#   vpc_security_group_ids      = [aws_security_group.ec2_sg.id]
+#   subnet_id                   = module.vpc.public_subnets[0]
+#   iam_instance_profile        = aws_iam_instance_profile.ec2_instance_profile.name
+#   associate_public_ip_address = true
+#   user_data_base64            = data.template_cloudinit_config.config.rendered
+# }
+
 #------------------------------#
 #Attach volumes to EC2 Instance
 #------------------------------#
-# resource "aws_volume_attachment" "ebs_att_dev" {
-#   device_name = "/dev/sdf"
-#   volume_id   = aws_ebs_volume.server_storage.id
-#   instance_id = module.ec2_instance_dev.id
-# }
-
-resource "aws_volume_attachment" "ebs_att_test" {
+resource "aws_volume_attachment" "ebs_att_dev" {
   device_name = "/dev/sdf"
   volume_id   = aws_ebs_volume.server_storage.id
-  instance_id = module.ec2_instance_production.id
+  instance_id = module.ec2_instance_dev.id
 }
+
+# resource "aws_volume_attachment" "ebs_att_test" {
+#   device_name = "/dev/sdf"
+#   volume_id   = aws_ebs_volume.server_storage.id
+#   instance_id = module.ec2_instance_production.id
+# }

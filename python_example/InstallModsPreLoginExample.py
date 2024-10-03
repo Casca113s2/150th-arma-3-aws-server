@@ -12,6 +12,7 @@ from urllib import request
 # region Configuration
 STEAM_CMD = "/mnt/ebs_volume/steam/steamcmd/steamcmd.sh"  # steamcmd.sh directory
 STEAM_USER = ""  # Note account already login to steamcmd and cached
+MOUNT_POINT = "/mnt/ebs_volume"
 
 A3_SERVER_ID = "233780"
 A3_SERVER_DIR = (
@@ -211,6 +212,30 @@ MaxCustomFileSize = 1024000;                    // (bytes) Users with custom fac
         cfg_file.write(basic_cfg_content)
         print("basic.cfg created at {}".format(cfg_path))
 
+def copy_ocap_and_userconfig():
+    ocap_source = os.path.join(MOUNT_POINT, "steam/@ocap")
+    userconfig_source = os.path.join(MOUNT_POINT, "steam/addon/userconfig")
+    arma3_dest = os.path.join(MOUNT_POINT, "steam/steamcmd/arma3")
+
+    # Copy @ocap directory to arma3 destination (overwrite if exist)
+    if os.path.isdir(ocap_source):
+        ocap_dest = os.path.join(arma3_dest, "@ocap")
+        if os.path.isdir(ocap_dest):
+            shutil.rmtree(ocap_dest)
+        shutil.copytree(ocap_source, ocap_dest)
+        print(f"Copied @ocap to {ocap_dest}")
+    else:
+        print(f"Source @ocap directory does not exist: {ocap_source}")
+
+    # Copy userconfig directory to arma3 destination (overwrite if exist)
+    if os.path.isdir(userconfig_source):
+        userconfig_dest = os.path.join(arma3_dest, "userconfig")
+        if os.path.isdir(userconfig_dest):
+            shutil.rmtree(userconfig_dest)
+        shutil.copytree(userconfig_source, userconfig_dest)
+        print(f"Copied userconfig to {userconfig_dest}")
+    else:
+        print(f"Source userconfig directory does not exist: {userconfig_source}")
 
 # endregion
 
@@ -228,3 +253,6 @@ create_mod_symlinks()
 
 log("Creating basic.cfg...")
 create_basic_cfg()
+
+log("Copying @ocap and userconfig...")
+copy_ocap_and_userconfig()

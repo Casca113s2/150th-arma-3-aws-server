@@ -74,5 +74,5 @@ elif [ -d ~/steamcmd/arma3 ]; then #if arma3 already install and setup then run 
   cd ~/arma-server-web-admin
   
   # Start web panel
-  nohup node app.js
+  nohup node app.js &
 fi

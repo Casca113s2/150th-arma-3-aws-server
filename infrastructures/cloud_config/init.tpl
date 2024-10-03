@@ -12,6 +12,10 @@ write_files:
     permissions: '0705'
     encoding: b64
     content: ${SCRIPTINIT}
+  - path: /home/ssm-user/install_ocap.sh
+    permissions: '0705'
+    encoding: b64
+    content: ${OCAPINIT}
   
 runcmd:
   - /home/ssm-user/server_init.sh

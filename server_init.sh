@@ -1,22 +1,31 @@
 #!/bin/bash
 
 #-------------------------------------------------#
-# Install required libraries, tools, and packages
+# Install required libraries, tools, packages, etc..
 #-------------------------------------------------#
+
+# Set the timezone to UTC+7
+sudo timedatectl set-timezone Asia/Bangkok
 
 # Add lib32gcc-s1
 sudo dpkg --add-architecture i386
 sudo apt-get update
 sudo apt-get install -y lib32gcc-s1
 
-#Install Python3
+# Install Python3
 sudo apt-get install python3
 
-#Install Git
+# Install Git
 sudo apt install -y git-all
 
-#Install rename
+# Install rename
 sudo apt install -y rename
+
+# Install Golang
+sudo apt install -y golang-go
+
+# Install p7zip
+sudo apt install -y p7zip-full
 
 #-------------------------------------------------#
 # Mount EBS to machine and create user name steam
@@ -45,6 +54,19 @@ sudo mount /dev/$device $mount_point
 echo "$device has been mounted to $mount_point"
 
 #-------------------------------------------------#
+# Add the device to /etc/fstab for persistence after reboot
+#-------------------------------------------------#
+
+# Get the UUID of the device
+uuid=$(sudo blkid -s UUID -o value /dev/$device)
+
+# Add the entry to /etc/fstab if it doesn't already exist
+if ! grep -qs "$uuid" /etc/fstab; then
+  echo "UUID=$uuid  $mount_point  ext4  defaults,nofail  0  2" | sudo tee -a /etc/fstab
+  echo "Added /dev/$device to /etc/fstab"
+fi
+
+#-------------------------------------------------#
 # Create user name steam and set home dir
 #-------------------------------------------------#
 
@@ -63,4 +85,5 @@ if [ ! -d "$mount_point/steam"]; then
 fi
 
 sudo su -c '/home/ssm-user/steamcmd_webpanel_init.sh' steam
+sudo su -c '/home/ssm-user/install_ocap.sh' steam
 sudo su -c '/home/ssm-user/install_mods_and_config.sh'

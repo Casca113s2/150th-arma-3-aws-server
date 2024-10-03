@@ -82,7 +82,8 @@ from urllib import request
 
 # region Configuration
 STEAM_CMD = "/mnt/ebs_volume/steam/steamcmd/steamcmd.sh"  # steamcmd.sh directory
-STEAM_USER = ""  # Note account already login to steamcmd and cached
+STEAM_USER = "cascabusiness"  # Note account already login to steamcmd and cached
+MOUNT_POINT = "/mnt/ebs_volume"
 
 A3_SERVER_ID = "233780"
 A3_SERVER_DIR = (
@@ -264,7 +265,7 @@ viewDistance = 2000;
 
 // These options are important for performance tuning
 
-MaxBandwidth = 2147483647;      // 2.1 gbit //or comment out, setting doesn't do anything
+//MaxBandwidth = 2147483647;      // 2.1 gbit //or comment out, setting doesn't do anything
 MinBandwidth = 249000000;                // 249 mbit/6 zeros //not really relevant, do not set higher than your actual available bandwidth, also tested with 256000000 (256mbit/6 zeros)
 MaxMsgSend = 64;                //IMPORTANT setting, also tested with 48 but that comes with increased lag whenever a player connects, setting this to 128 or more has resulted in the server yellow chaining and not recovering on 16AA and Karmakut servers.
 MaxSizeGuaranteed = 512;
@@ -273,7 +274,7 @@ MinErrorToSend = 0.001;
 MinErrorToSendNear = 0.01;
 
 
-MaxCustomFileSize = 1024000;                    // (bytes) Users with custom face or custom sound larger than this size are kicked when trying to connect.
+//MaxCustomFileSize = 1024000;                    // (bytes) Users with custom face or custom sound larger than this size are kicked when trying to connect.
 //class sockets{ maxPacketSize = 1400;};
 """
     cfg_path = os.path.join(A3_SERVER_DIR, "basic.cfg")
@@ -282,7 +283,32 @@ MaxCustomFileSize = 1024000;                    // (bytes) Users with custom fac
         cfg_file.write(basic_cfg_content)
         print("basic.cfg created at {}".format(cfg_path))
 
+def copy_ocap_and_userconfig():
+    ocap_source = os.path.join(MOUNT_POINT, "steam/@ocap")
+    userconfig_source = os.path.join(MOUNT_POINT, "steam/addon/userconfig")
+    arma3_dest = os.path.join(MOUNT_POINT, "steam/steamcmd/arma3")
 
+    # Copy @ocap directory to arma3 destination (overwrite if exist)
+    if os.path.isdir(ocap_source):
+        ocap_dest = os.path.join(arma3_dest, "@ocap")
+        if os.path.isdir(ocap_dest):
+            shutil.rmtree(ocap_dest)
+        shutil.copytree(ocap_source, ocap_dest)
+        print(f"Copied @ocap to {ocap_dest}")
+    else:
+        print(f"Source @ocap directory does not exist: {ocap_source}")
+
+    # Copy userconfig directory to arma3 destination (overwrite if exist)
+    if os.path.isdir(userconfig_source):
+        userconfig_dest = os.path.join(arma3_dest, "userconfig")
+        if os.path.isdir(userconfig_dest):
+            shutil.rmtree(userconfig_dest)
+        shutil.copytree(userconfig_source, userconfig_dest)
+        print(f"Copied userconfig to {userconfig_dest}")
+    else:
+        print(f"Source userconfig directory does not exist: {userconfig_source}")
+
+        
 # endregion
 
 log("Updating A3 server ({})".format(A3_SERVER_ID))
@@ -299,6 +325,9 @@ create_mod_symlinks()
 
 log("Creating basic.cfg...")
 create_basic_cfg()
+
+log("Copying @ocap and userconfig...")
+copy_ocap_and_userconfig()
 EOF2
 
 # Set owner to steam
